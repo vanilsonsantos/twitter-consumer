@@ -1,0 +1,11 @@
+{
+  "name": "twitter-consumer",
+  "version": "1.0.0",
+  "description": "Application to visualize the most recent videos being shared by twitter",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Vanilson Santos",
+  "license": "ISC"
+}
