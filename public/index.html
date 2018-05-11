@@ -8,8 +8,9 @@
 
 <body>
 	<form>
-		<input id="query"></input>
-		<input type="submit" id="submit" style="display:none"></input>
+		<input id="videourl"></input>
+		<input id="text"></input>
+		<input type="submit" id="submit"></input>
 	</form>
 
 	<div id="container"></div>
@@ -33,6 +34,13 @@
 			var usr = "<span style='color:#4183C4'>" + '@' + data.user.screen_name + "</span>";
 			$('#container').prepend(usr + " : " + text + "<br>");
 		});
+
+		$("form").submit(function(e) {
+			e.preventDefault();
+			var youtube_link = $('#videourl').val();
+			var text = $('#text').val();
+			socket.emit('send-tweet', youtube_link, text);
+		})
 
 	</script>
 </body>

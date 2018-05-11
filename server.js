@@ -15,6 +15,7 @@ var twitter = new _twitter({
 });
 
 var currentstream = 0;
+var currentCoordinates = {};
 
 io.on('connection', function (socket) {
 	socket.emit('init');
@@ -23,6 +24,7 @@ io.on('connection', function (socket) {
     axios.get('https://ipapi.co/json')
     .then(function (response) {
       var city = response.data.city;
+			currentCoordinates = {latitude: response.data.latitude, longitude:response.data.longitude};
       axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${city}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
       .then(function (response) {
         var viewport = response.data.results[0].geometry.viewport;
@@ -32,7 +34,8 @@ io.on('connection', function (socket) {
 					viewport.northeast.lng.toString(),
 					viewport.northeast.lat.toString()
 				]
-				socket.emit('got-location', currentLocation.join(","));
+				console.log(currentLocation.join(","));
+				socket.emit('got-location', currentLocation.join(","), currentCoordinates);
       })
       .catch(function (error) {
         console.log(error);
@@ -43,13 +46,13 @@ io.on('connection', function (socket) {
     });
   })
 	socket.on('find-tweets', function(currentLocation) {
-		twitter.stream('statuses/filter', {locations: currentLocation}, function(stream) {
+		twitter.stream('statuses/filter', {locations:currentLocation}, function(stream) {
 			if (currentstream)
 				currentstream.destroy()
 			stream.on('data', function(tweet) {
 				if (hasNowPlayingHashtag(tweet.text)) {
 					tweet.entities.urls.forEach(function(url) {
-						if (hasYoutubeVideo(url.expanded_url)) {
+						if (isYoutubeUrlValid(url.expanded_url)) {
 							console.log(url);
 							socket.emit('tweet', tweet);
 						}
@@ -62,10 +65,28 @@ io.on('connection', function (socket) {
 			currentstream = stream;
 		});
 	});
+	socket.on('send-tweet', function(youtube_link, text) {
+		console.log(currentCoordinates)
+		twitter.post('statuses/update', {
+								status : text + ' ' + youtube_link,
+								lat: currentCoordinates.latitude,
+								long: currentCoordinates.longitude
+		        })
+		        .then(function (response) {
+							console.log('Tweet posted with hashtag #nowplaying')
+		        })
+		        .catch(error => {
+		          console.log('error', error);
+		        });
+	});
 });
 
-function hasYoutubeVideo(expanded_url) {
-	return url.expanded_url.toLowerCase().indexOf('youtube.com/watch') > -1;
+function isYoutubeUrlValid(url) {
+	var p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
+    if(url.match(p)){
+        return url.match(p)[1];
+    }
+    return false;
 }
 
 function hasNowPlayingHashtag(tweetText) {
