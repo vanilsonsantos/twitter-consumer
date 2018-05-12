@@ -7,13 +7,17 @@
 </head>
 
 <body>
+
 	<form>
 		<input id="videourl"></input>
 		<input id="text"></input>
 		<input type="submit" id="submit"></input>
 	</form>
 
-	<div id="container"></div>
+	<div id="container">
+		<div id="header"/>
+		<div id="content"/>
+	</div>
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 
@@ -25,19 +29,28 @@
 			socket.emit('get-locations');
 		})
 
-		socket.on('got-location', function(currentLocation, currentCoordinates) {
-			socket.emit('populate-initial-view', currentCoordinates, currentLocation)
+		socket.on('got-location', function(viewport, location) {
+			$('#content').before(`<h1>#nowplaying in ${location.city}</h1>`);
+			$('#content').before(`<p>This page shows #nowplaying tweets in ${location.city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
+			socket.emit('populate-initial-view', viewport, location)
 		})
 
-		socket.on('start-stream', function(currentLocation) {
-			socket.emit('find-tweets', currentLocation);
+		socket.on('start-stream', function(viewport) {
+			socket.emit('find-tweets', viewport);
 		})
 
-		socket.on('tweet', function (data) {
-			var text = data.text.replace(regexp, '<a href="$1" target="_blank">$1</a>');
-			var usr = `<span style='color:#4183C4'>@${data.screen_name}</span>`;
-			var video = `<iframe width="320" height="240" src="${data.video_link}"></iframe>`;
-			$('#container').prepend(video + " : " + text + "<br>");
+		socket.on('render-initial-view', function(tweet) {
+			var text = tweet.text.replace(regexp, '<a href="$1" target="_blank">$1</a>');
+			var usr = `<span style='color:#4183C4'>@${tweet.screen_name}</span>`;
+			var video = `<iframe width="320" height="240" src="${tweet.video_link}"></iframe>`;
+			$('#content').append(video + " : " + text + "<br>");
+		});
+
+		socket.on('render-new-tweet', function (tweet) {
+			var text = tweet.text.replace(regexp, '<a href="$1" target="_blank">$1</a>');
+			var usr = `<span style='color:#4183C4'>@${tweet.screen_name}</span>`;
+			var video = `<iframe width="320" height="240" src="${tweet.video_link}"></iframe>`;
+			$('#content').prepend(video + " : " + text + "<br>");
 		});
 
 		$("form").submit(function(e) {

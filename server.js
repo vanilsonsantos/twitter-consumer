@@ -15,7 +15,7 @@ var twitter = new _twitter({
 });
 
 var currentstream = 0;
-var currentCoordinates = {};
+var location = {};
 
 io.on('connection', function (socket) {
 	socket.emit('init');
@@ -24,18 +24,19 @@ io.on('connection', function (socket) {
     axios.get('https://ipapi.co/json')
     .then(function (response) {
       var city = response.data.city;
-			currentCoordinates = {latitude: response.data.latitude, longitude:response.data.longitude};
+			location = {city: city, latitude: response.data.latitude, longitude:response.data.longitude};
       axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${city}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
       .then(function (response) {
-        var viewport = response.data.results[0].geometry.viewport;
-				var currentLocation = [
-					viewport.southwest.lng.toString(),
-					viewport.southwest.lat.toString(),
-					viewport.northeast.lng.toString(),
-					viewport.northeast.lat.toString()
+        var viewportResponse = response.data.results[0].geometry.viewport;
+				var viewport = [
+					viewportResponse.southwest.lng.toString(),
+					viewportResponse.southwest.lat.toString(),
+					viewportResponse.northeast.lng.toString(),
+					viewportResponse.northeast.lat.toString()
 				]
-				console.log(currentLocation.join(","));
-				socket.emit('got-location', currentLocation.join(","), currentCoordinates);
+				console.log(viewport.join(","));
+				console.log(location)
+				socket.emit('got-location', viewport.join(","), location);
       })
       .catch(function (error) {
         console.log(error);
@@ -45,17 +46,17 @@ io.on('connection', function (socket) {
       console.log(error);
     });
   })
-	socket.on('populate-initial-view', function(currentCoordinates, currentLocation) {
+	socket.on('populate-initial-view', function(viewport, location) {
 		twitter.get('search/tweets', {
 		            q: '#nowplaying url:youtube',
 		            result_type: 'recent',
 		            count: 5,
-								geocode: currentCoordinates.latitude + ',' + currentCoordinates.longitude + ',30km'
+								geocode: location.latitude + ',' + location.longitude + ',30km'
 		        })
 		        .then(function (response) {
 							response.statuses.forEach(function(tweet) {
 								tweet.entities.urls.forEach(function(url) {
-									socket.emit('tweet', {
+									socket.emit('render-initial-view', {
 										avatar: tweet.user.profile_image_url,
 										name: tweet.user.name,
 										screen_name: tweet.user.screen_name,
@@ -65,14 +66,14 @@ io.on('connection', function (socket) {
 									});
 								});
 							});
-							socket.emit('start-stream', currentLocation);
+							socket.emit('start-stream', viewport);
 		        })
 		        .catch(error => {
 		            console.log('error', error);
 		        });
 	});
-	socket.on('find-tweets', function(currentLocation) {
-		twitter.stream('statuses/filter', {locations:currentLocation}, function(stream) {
+	socket.on('find-tweets', function(viewport) {
+		twitter.stream('statuses/filter', {locations:viewport}, function(stream) {
 			if (currentstream)
 				currentstream.destroy()
 			stream.on('data', function(tweet) {
@@ -80,7 +81,7 @@ io.on('connection', function (socket) {
 					tweet.entities.urls.forEach(function(url) {
 						var expanded_url = url.expanded_url;
 						if (isYoutubeUrlValid(expanded_url)) {
-							socket.emit('tweet', {
+							socket.emit('render-new-tweet', {
 								avatar: tweet.user.profile_image_url,
 								name: tweet.user.name,
 								screen_name: tweet.user.screen_name,
@@ -99,11 +100,11 @@ io.on('connection', function (socket) {
 		});
 	});
 	socket.on('send-tweet', function(youtube_link, text) {
-		console.log(currentCoordinates)
+		console.log(location)
 		twitter.post('statuses/update', {
 								status : text + ' ' + youtube_link,
-								lat: currentCoordinates.latitude,
-								long: currentCoordinates.longitude
+								lat: location.latitude,
+								long: location.longitude
 		        })
 		        .then(function (response) {
 							console.log('Tweet posted with hashtag #nowplaying')
