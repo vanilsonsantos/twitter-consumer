@@ -45,6 +45,32 @@ io.on('connection', function (socket) {
       console.log(error);
     });
   })
+	socket.on('populate-initial-view', function(currentCoordinates, currentLocation) {
+		twitter.get('search/tweets', {
+		            q: '#nowplaying url:youtube',
+		            result_type: 'recent',
+		            count: 5,
+								geocode: currentCoordinates.latitude + ',' + currentCoordinates.longitude + ',30km'
+		        })
+		        .then(function (response) {
+							response.statuses.forEach(function(tweet) {
+								tweet.entities.urls.forEach(function(url) {
+									socket.emit('tweet', {
+										avatar: tweet.user.profile_image_url,
+										name: tweet.user.name,
+										screen_name: tweet.user.screen_name,
+										text: tweet.text,
+										video_link: getVideoLink(url.expanded_url),
+										date: tweet.created_at
+									});
+								});
+							});
+							socket.emit('start-stream', currentLocation);
+		        })
+		        .catch(error => {
+		            console.log('error', error);
+		        });
+	});
 	socket.on('find-tweets', function(currentLocation) {
 		twitter.stream('statuses/filter', {locations:currentLocation}, function(stream) {
 			if (currentstream)
@@ -52,9 +78,16 @@ io.on('connection', function (socket) {
 			stream.on('data', function(tweet) {
 				if (hasNowPlayingHashtag(tweet.text)) {
 					tweet.entities.urls.forEach(function(url) {
-						if (isYoutubeUrlValid(url.expanded_url)) {
-							console.log(url);
-							socket.emit('tweet', tweet);
+						var expanded_url = url.expanded_url;
+						if (isYoutubeUrlValid(expanded_url)) {
+							socket.emit('tweet', {
+								avatar: tweet.user.profile_image_url,
+								name: tweet.user.name,
+								screen_name: tweet.user.screen_name,
+								text: tweet.text,
+								video_link: getVideoLink(url.expanded_url),
+								date: tweet.created_at
+							});
 						}
 					});
 				}
@@ -80,6 +113,17 @@ io.on('connection', function (socket) {
 		        });
 	});
 });
+
+function getVideoLink(url) {
+    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    var match = url.match(regExp);
+
+    if (match && match[2].length == 11) {
+        return "http://www.youtube.com/embed/" + match[2];
+    } else {
+        return 'error';
+    }
+}
 
 function isYoutubeUrlValid(url) {
 	var p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;

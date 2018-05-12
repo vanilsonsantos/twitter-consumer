@@ -21,18 +21,23 @@
 		var socket = io.connect('http://localhost:3000');
 		var regexp = /((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi;
 
-		socket.on('init', function () {
+		socket.on('init', function() {
 			socket.emit('get-locations');
 		})
 
-		socket.on('got-location', function (currentLocation) {
+		socket.on('got-location', function(currentLocation, currentCoordinates) {
+			socket.emit('populate-initial-view', currentCoordinates, currentLocation)
+		})
+
+		socket.on('start-stream', function(currentLocation) {
 			socket.emit('find-tweets', currentLocation);
 		})
 
 		socket.on('tweet', function (data) {
 			var text = data.text.replace(regexp, '<a href="$1" target="_blank">$1</a>');
-			var usr = "<span style='color:#4183C4'>" + '@' + data.user.screen_name + "</span>";
-			$('#container').prepend(usr + " : " + text + "<br>");
+			var usr = `<span style='color:#4183C4'>@${data.screen_name}</span>`;
+			var video = `<iframe width="320" height="240" src="${data.video_link}"></iframe>`;
+			$('#container').prepend(video + " : " + text + "<br>");
 		});
 
 		$("form").submit(function(e) {
