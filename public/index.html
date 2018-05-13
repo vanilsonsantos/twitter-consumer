@@ -14,10 +14,12 @@
 		<input type="submit" id="submit"></input>
 	</form>
 
+
 	<div id="container">
-		<div id="header"/>
-		<div id="content"/>
+		<div id="header"></div>
+		<div id="content"></div>
 	</div>
+
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 
@@ -29,9 +31,12 @@
 			socket.emit('get-locations');
 		})
 
+		socket.on('set-header', function(city) {
+			$('#header').append(`<h1>#nowplaying in ${city}</h1>`);
+			$('#header').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
+		});
+
 		socket.on('got-location', function(viewport, location) {
-			$('#content').before(`<h1>#nowplaying in ${location.city}</h1>`);
-			$('#content').before(`<p>This page shows #nowplaying tweets in ${location.city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
 			socket.emit('populate-initial-view', viewport, location)
 		})
 
@@ -39,14 +44,14 @@
 			socket.emit('find-tweets', viewport);
 		})
 
-		socket.on('render-initial-view', function(tweet) {
+		socket.on('render-tweet-initial-view', function (tweet) {
 			var text = tweet.text.replace(regexp, '<a href="$1" target="_blank">$1</a>');
 			var usr = `<span style='color:#4183C4'>@${tweet.screen_name}</span>`;
 			var video = `<iframe width="320" height="240" src="${tweet.video_link}"></iframe>`;
 			$('#content').append(video + " : " + text + "<br>");
 		});
 
-		socket.on('render-new-tweet', function (tweet) {
+		socket.on('render-tweet-from-stream', function (tweet) {
 			var text = tweet.text.replace(regexp, '<a href="$1" target="_blank">$1</a>');
 			var usr = `<span style='color:#4183C4'>@${tweet.screen_name}</span>`;
 			var video = `<iframe width="320" height="240" src="${tweet.video_link}"></iframe>`;

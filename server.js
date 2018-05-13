@@ -23,8 +23,8 @@ io.on('connection', function (socket) {
   socket.on('get-locations', function() {
     axios.get('https://ipapi.co/json')
     .then(function (response) {
-      var city = response.data.city;
-			location = {city: city, latitude: response.data.latitude, longitude:response.data.longitude};
+			socket.emit('set-header', response.data.city);
+			location = {latitude: response.data.latitude, longitude:response.data.longitude};
       axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${city}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
       .then(function (response) {
         var viewportResponse = response.data.results[0].geometry.viewport;
@@ -56,7 +56,7 @@ io.on('connection', function (socket) {
 		        .then(function (response) {
 							response.statuses.forEach(function(tweet) {
 								tweet.entities.urls.forEach(function(url) {
-									socket.emit('render-initial-view', {
+									socket.emit('render-tweet-initial-view', {
 										avatar: tweet.user.profile_image_url,
 										name: tweet.user.name,
 										screen_name: tweet.user.screen_name,
@@ -81,7 +81,7 @@ io.on('connection', function (socket) {
 					tweet.entities.urls.forEach(function(url) {
 						var expanded_url = url.expanded_url;
 						if (isYoutubeUrlValid(expanded_url)) {
-							socket.emit('render-new-tweet', {
+							socket.emit('render-tweet-from-stream', {
 								avatar: tweet.user.profile_image_url,
 								name: tweet.user.name,
 								screen_name: tweet.user.screen_name,
