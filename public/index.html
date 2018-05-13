@@ -8,22 +8,43 @@
 
 <body>
 
-	<form>
-		<input id="videourl"></input>
-		<input id="text"></input>
-		<input type="submit" id="submit"></input>
-	</form>
+	<div class="top-container">Getting user location...</div>
 
+	<div class="header" id="myHeader">
+			<span class="label-input">Video link<input id="videourl" placeholder='Put your video url here'></input></span>
+			<span class="label-input">Comment<input id="comment" placeholder='Put your comment here'></input></span>
+			<span>
+				<div id="submitTweet" style="display: inline; cursor: pointer; background-color:#1da2f0; -moz-border-radius: 2em; -webkit-border-radius: 2em; padding:9px 12px 9px 40px;"> Tweets to #nowplaying
+				<img class="send-tweet-logo"
+				src="./twitter-icon-square-logo-preview.png"
+				style="position: absolute; margin:2px 0 0 -175px; "
+				width="30px"
+				height="30px">
+				</div>
+			</span>
+	</div>
 
-	<div id="container">
-		<div id="header"></div>
-		<div id="content"></div>
+	<div id="content" style="margin: 0 auto 0 auto; width:750px;">
 	</div>
 
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 
 	<script>
+
+		window.onscroll = function() {myFunction()};
+
+		var header = document.getElementById("myHeader");
+		var sticky = header.offsetTop;
+
+		function myFunction() {
+			if (window.pageYOffset >= sticky) {
+				header.classList.add("sticky");
+			} else {
+				header.classList.remove("sticky");
+			}
+		}
+
 		var socket = io.connect('http://localhost:3000');
 		var regexp = /((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi;
 
@@ -32,8 +53,9 @@
 		})
 
 		socket.on('set-header', function(city) {
-			$('#header').append(`<h1>#nowplaying in ${city}</h1>`);
-			$('#header').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
+			$('.top-container').empty();
+			$('.top-container').append(`<h1>#nowplaying in ${city}</h1>`);
+			$('.top-container').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
 		});
 
 		socket.on('got-location', function(viewport, location) {
@@ -58,12 +80,11 @@
 			$('#content').prepend(video + " : " + text + "<br>");
 		});
 
-		$("form").submit(function(e) {
-			e.preventDefault();
+		$("#submitTweet").click(function() {
 			var youtube_link = $('#videourl').val();
-			var text = $('#text').val();
+			var text = $('#comment').val();
 			socket.emit('send-tweet', youtube_link, text);
-		})
+		});
 
 	</script>
 </body>

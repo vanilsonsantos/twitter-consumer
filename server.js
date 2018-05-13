@@ -23,7 +23,8 @@ io.on('connection', function (socket) {
   socket.on('get-locations', function() {
     axios.get('https://ipapi.co/json')
     .then(function (response) {
-			socket.emit('set-header', response.data.city);
+      var city = response.data.city;
+			socket.emit('set-header', city);
 			location = {latitude: response.data.latitude, longitude:response.data.longitude};
       axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${city}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
       .then(function (response) {
