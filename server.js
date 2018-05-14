@@ -141,6 +141,6 @@ function hasNowPlayingHashtag(tweetText) {
 	return tweetText.toLowerCase().indexOf('#nowplaying') > -1;
 }
 
-server.listen(3000,function(){
+server.listen(process.env.PORT || 3000, function(){
   console.log('Node server running at port 3000');
 });
