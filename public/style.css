@@ -82,9 +82,10 @@ input {
 }
 
 .top-container {
-  background-color: #f1f1f1;
+  background-color: #1da2f0;
   padding: 30px;
   text-align: center;
+	color: white;
 }
 
 .header {
