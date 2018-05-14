@@ -1,7 +1,16 @@
+navigator.geolocation.getCurrentPosition(
+    function(position) {
+      var location = {latitude: position.coords.latitude, longitude: position.coords.longitude};
+      socket.emit('got-location-from-browser', location);
+    },
+    function(error){
+      console.log(error.code);
+      console.log(error.message);
+    }
+);
+
 $(".header").addClass("disabledbutton");
-
 window.onscroll = function() {myFunction()};
-
 var header = document.getElementById("middleHeader");
 var sticky = header.offsetTop;
 
@@ -15,8 +24,8 @@ function myFunction() {
 
 var socket = io.connect('http://localhost:3000');
 
-socket.on('init', function() {
-  socket.emit('get-locations');
+socket.on('init', function(location) {
+  socket.emit('get-viewport', location);
 })
 
 socket.on('set-header', function(city) {
@@ -25,7 +34,7 @@ socket.on('set-header', function(city) {
   $('.top-container').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
 });
 
-socket.on('got-location', function(viewport, location) {
+socket.on('got-viewport', function(viewport, location) {
   socket.emit('populate-initial-view', viewport, location)
 })
 

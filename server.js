@@ -4,7 +4,7 @@ var app = express();
 const axios = require('axios');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-var timeago = require('time-ago')
+var timeago = require('time-ago');
 
 app.use('/', express.static(__dirname + '/public'));
 
@@ -19,34 +19,31 @@ var currentstream = 0;
 var location = {};
 
 io.on('connection', function (socket) {
-	socket.emit('init');
 	var socket = socket;
-  socket.on('get-locations', function() {
-    axios.get('https://ipapi.co/json')
-    .then(function (response) {
-      var city = response.data.city;
-			socket.emit('set-header', city);
-			location = {latitude: response.data.latitude, longitude:response.data.longitude};
-      axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${city}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
-      .then(function (response) {
-        var viewportResponse = response.data.results[0].geometry.viewport;
-				var viewport = [
-					viewportResponse.southwest.lng.toString(),
-					viewportResponse.southwest.lat.toString(),
-					viewportResponse.northeast.lng.toString(),
-					viewportResponse.northeast.lat.toString()
-				]
-				console.log(viewport.join(","));
-				console.log(location)
-				socket.emit('got-location', viewport.join(","), location);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+
+	socket.on('got-location-from-browser', function(location) {
+		socket.emit('init', location);
+	})
+
+  socket.on('get-viewport', function(location) {
+		axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
+		.then(function (response) {
+			var result = response.data.results[0];
+			socket.emit('set-header', getCity(result));
+			var viewportResponse = result.geometry.viewport;
+			var viewport = [
+				viewportResponse.southwest.lng.toString(),
+				viewportResponse.southwest.lat.toString(),
+				viewportResponse.northeast.lng.toString(),
+				viewportResponse.northeast.lat.toString()
+			]
+			console.log(viewport.join(","));
+			console.log(location)
+			socket.emit('got-viewport', viewport.join(","), location);
+		})
+		.catch(function (error) {
+			console.log(error);
+		});
   })
 	socket.on('populate-initial-view', function(viewport, location) {
 		twitter.get('search/tweets', {
@@ -117,6 +114,18 @@ io.on('connection', function (socket) {
 		        });
 	});
 });
+
+function getCity(result) {
+	var city = '';
+	result.address_components.forEach(function(address) {
+		address.types.forEach(function(type) {
+			if (type == 'administrative_area_level_2') {
+				city = address.short_name;
+			}
+		});
+	});
+	return city;
+}
 
 function getVideoLink(url) {
     var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
