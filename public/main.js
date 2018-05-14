@@ -10,11 +10,11 @@ navigator.geolocation.getCurrentPosition(
 );
 
 $(".header").addClass("disabledbutton");
-window.onscroll = function() {myFunction()};
+window.onscroll = function() {fixesHeader()};
 var header = document.getElementById("middleHeader");
 var sticky = header.offsetTop;
 
-function myFunction() {
+function fixesHeader() {
   if (window.pageYOffset >= sticky) {
     header.classList.add("sticky");
   } else {
@@ -44,26 +44,26 @@ socket.on('start-stream', function(viewport) {
 })
 
 function getTweetContent(tweet) {
-  return `<div style="width:100%; height: 270px; margin-top: -3px; background-color:#f1f1f1;">
-    <div style="width:49.5%; float: left;padding: 0; margin: 2px 0 0 2px;  height:265px;">
+  return `<div class="tweetContent">
+    <div class="videoContainer">
       <iframe style="border:0;" width="100%" height="100%" src="${tweet.video_link}"></iframe>
     </div>
-    <div style="width:49.5%; margin: 2px 2px 0 0; background-color: white; border:1px solid #e7e7e7; float: right;padding: 0; height:auto;">
-      <div style="margin: 15px 0 0 15px; background-position: center; background-image: url('${tweet.avatar}'); float: left; border-radius: 50%; width:45px; height: 45px;">
+    <div class="tweetContainer">
+      <div class="tweetContainerAvatar" style="background-image: url('${tweet.avatar}');">
       </div>
-      <div style="font-size: 15px;float:left; margin-left:5px; margin-top:20px; display:block;">
+      <div class="tweetContainerName">
         <span style="font-weight: bold; display:block;">${tweet.name}</span>
         <span>@${tweet.screen_name}</span>
       </div>
-      <div style="margin: 15px 15px 0 0; background-position: center; float: right; border-radius: 50%; width:30px; height: 30px;">
+      <div class="tweetContainerLogo">
         <img src="./Twitter-Logo.png" width="30px" height="30px">
       </div>
-      <div style="width:100%; margin-top: 15px; font-size: 17px; float:right;">
+      <div class="tweetContainerText">
         <span style="display:block; margin:0 15px 0 15px;">
           ${tweet.text}
         <span>
       </div>
-      <div style="width:100%; margin: 15px 0 15px 0; font-size: 16px; float: right;">
+      <div class="tweetContainerInfo">
           <span style="text-align: justify; display:block; margin:0 15px 0 15px;">${tweet.date}</span>
       </div>
     </div>
