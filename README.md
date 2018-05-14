@@ -1,5 +1,6 @@
 # Pre-configuration
- * Need to npm and node
+ * Need to install npm and node
+ * Run npm install
 
-# Running tests locally
+# Running application locally
  * node server.js
