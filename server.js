@@ -52,11 +52,12 @@ io.on('connection', function (socket) {
 		twitter.get('search/tweets', {
 		            q: '#nowplaying url:youtube',
 		            result_type: 'recent',
-		            count: 5,
+		            count: 8,
 								geocode: location.latitude + ',' + location.longitude + ',30km'
 		        })
 		        .then(function (response) {
-							response.statuses.forEach(function(tweet) {
+							for (i=0 ; i < 5 ; i++) {
+								var tweet = response.statuses[i];
 								tweet.entities.urls.forEach(function(url) {
 									socket.emit('render-tweet-initial-view', {
 										avatar: tweet.user.profile_image_url,
@@ -67,7 +68,7 @@ io.on('connection', function (socket) {
 										date: timeago.ago(tweet.created_at)
 									});
 								});
-							});
+							}
 							socket.emit('start-stream', viewport);
 		        })
 		        .catch(error => {
