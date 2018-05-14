@@ -4,6 +4,7 @@ var app = express();
 const axios = require('axios');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var timeago = require('time-ago')
 
 app.use('/', express.static(__dirname + '/public'));
 
@@ -63,7 +64,7 @@ io.on('connection', function (socket) {
 										screen_name: tweet.user.screen_name,
 										text: tweet.text,
 										video_link: getVideoLink(url.expanded_url),
-										date: tweet.created_at
+										date: timeago.ago(tweet.created_at)
 									});
 								});
 							});
@@ -88,7 +89,7 @@ io.on('connection', function (socket) {
 								screen_name: tweet.user.screen_name,
 								text: tweet.text,
 								video_link: getVideoLink(url.expanded_url),
-								date: tweet.created_at
+								date: timeago.ago(tweet.created_at)
 							});
 						}
 					});
