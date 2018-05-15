@@ -10,3 +10,6 @@
 
 # Running application locally
  * node server.js
+
+# Application url (deployed on Heroku)
+ * https://nowplaying-twitter-streamer.herokuapp.com/
