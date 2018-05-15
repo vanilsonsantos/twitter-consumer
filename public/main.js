@@ -1,13 +1,42 @@
+var currentLocation;
+
 navigator.geolocation.getCurrentPosition(
     function(position) {
-      var location = {latitude: position.coords.latitude, longitude: position.coords.longitude};
-      socket.emit('got-location-from-browser', location);
+      currentLocation = {latitude: position.coords.latitude, longitude: position.coords.longitude};
+      var googleApiUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${currentLocation.latitude},${currentLocation.longitude}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`;
+      $.get( googleApiUrl)
+      .done(function(data) {
+        var result = data.results[0];
+        setHeader(getCity(result));
+      	var viewportResponse = result.geometry.viewport;
+  			var viewport = [
+  				viewportResponse.southwest.lng.toString(),
+  				viewportResponse.southwest.lat.toString(),
+  				viewportResponse.northeast.lng.toString(),
+  				viewportResponse.northeast.lat.toString()
+  			]
+        socket.emit('populate-initial-view', viewport.join(","), currentLocation);
+      })
+      .fail(function(error) {
+        alert("Error when requesting google maps api" + error);
+      });
     },
     function(error){
-      console.log(error.code);
-      console.log(error.message);
+      alert("Error when getting geolocation: " + error);
     }
 );
+
+function getCity(result) {
+	var city = '';
+	result.address_components.forEach(function(address) {
+		address.types.forEach(function(type) {
+			if (type == 'administrative_area_level_2') {
+				city = address.short_name;
+			}
+		});
+	});
+	return city;
+}
 
 $(".header").addClass("disabledbutton");
 window.onscroll = function() {fixesHeader()};
@@ -24,24 +53,11 @@ function fixesHeader() {
 
 var socket = io.connect('http://localhost:3000');
 
-socket.on('init', function(location) {
-  socket.emit('get-viewport', location);
-})
-
-socket.on('set-header', function(city) {
+function setHeader(city) {
   $('.top-container').empty();
   $('.top-container').append(`<h1>#nowplaying in ${city}</h1>`);
   $('.top-container').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
-});
-
-socket.on('got-viewport', function(viewport, location) {
-  socket.emit('populate-initial-view', viewport, location)
-})
-
-socket.on('start-stream', function(viewport) {
-  socket.emit('find-tweets', viewport);
-  $('.header').removeClass('disabledbutton');
-})
+}
 
 function getTweetContent(tweet) {
   return `<div class="tweetContent">
@@ -70,8 +86,12 @@ function getTweetContent(tweet) {
   </div>`
 }
 
-socket.on('render-tweet-initial-view', function (tweet) {
-  $('#content').append(getTweetContent(tweet));
+socket.on('render-tweet-initial-view', function (initialTweets, viewport) {
+  initialTweets.forEach(function(tweet) {
+    $('#content').append(getTweetContent(tweet));
+  });
+  $('.header').removeClass('disabledbutton');
+  socket.emit('start-stream', viewport);
 });
 
 socket.on('render-tweet-from-stream', function (tweet) {
@@ -81,5 +101,5 @@ socket.on('render-tweet-from-stream', function (tweet) {
 $("#submitTweet").click(function() {
   var youtube_link = $('#videourl').val();
   var text = $('#comment').val();
-  socket.emit('send-tweet', youtube_link, text);
+  socket.emit('send-tweet', youtube_link, text, currentLocation);
 });

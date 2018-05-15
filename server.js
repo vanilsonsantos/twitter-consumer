@@ -16,63 +16,38 @@ var twitter = new _twitter({
 });
 
 var currentstream = 0;
-var location = {};
 
 io.on('connection', function (socket) {
 	var socket = socket;
-
-	socket.on('got-location-from-browser', function(location) {
-		socket.emit('init', location);
-	})
-
-  socket.on('get-viewport', function(location) {
-		axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&sensor=true&key=AIzaSyBjvIh3B5v69o-4YwgeTO38aaooW8GxTXY`)
-		.then(function (response) {
-			var result = response.data.results[0];
-			socket.emit('set-header', getCity(result));
-			var viewportResponse = result.geometry.viewport;
-			var viewport = [
-				viewportResponse.southwest.lng.toString(),
-				viewportResponse.southwest.lat.toString(),
-				viewportResponse.northeast.lng.toString(),
-				viewportResponse.northeast.lat.toString()
-			]
-			console.log(viewport.join(","));
-			console.log(location)
-			socket.emit('got-viewport', viewport.join(","), location);
-		})
-		.catch(function (error) {
-			console.log(error);
-		});
-  })
-	socket.on('populate-initial-view', function(viewport, location) {
+	socket.on('populate-initial-view', function(viewport, currentLocation) {
 		twitter.get('search/tweets', {
 		            q: '#nowplaying url:youtube',
 		            result_type: 'recent',
-		            count: 8,
-								geocode: location.latitude + ',' + location.longitude + ',30km'
+		            count: 18,
+								geocode: currentLocation.latitude + ',' + currentLocation.longitude + ',30km'
 		        })
 		        .then(function (response) {
+							var initialTweets = [];
 							for (i=0 ; i < 5 ; i++) {
 								var tweet = response.statuses[i];
 								tweet.entities.urls.forEach(function(url) {
-									socket.emit('render-tweet-initial-view', {
-										avatar: tweet.user.profile_image_url,
-										name: tweet.user.name,
-										screen_name: tweet.user.screen_name,
-										text: tweet.text,
-										video_link: getVideoLink(url.expanded_url),
-										date: timeago.ago(tweet.created_at)
+									initialTweets.push({
+											avatar: tweet.user.profile_image_url,
+											name: tweet.user.name,
+											screen_name: tweet.user.screen_name,
+											text: tweet.text,
+											video_link: getVideoLink(url.expanded_url),
+											date: timeago.ago(tweet.created_at)
 									});
 								});
 							}
-							socket.emit('start-stream', viewport);
+							socket.emit('render-tweet-initial-view', initialTweets, viewport);
 		        })
 		        .catch(error => {
 		            console.log('error', error);
 		        });
 	});
-	socket.on('find-tweets', function(viewport) {
+	socket.on('start-stream', function(viewport) {
 		twitter.stream('statuses/filter', {locations:viewport}, function(stream) {
 			if (currentstream)
 				currentstream.destroy()
@@ -99,12 +74,12 @@ io.on('connection', function (socket) {
 			currentstream = stream;
 		});
 	});
-	socket.on('send-tweet', function(youtube_link, text) {
-		console.log(location)
+	socket.on('send-tweet', function(youtube_link, text, currentLocation) {
+		console.log(currentLocation)
 		twitter.post('statuses/update', {
 								status : text + ' ' + youtube_link,
-								lat: location.latitude,
-								long: location.longitude
+								lat: currentLocation.latitude,
+								long: currentLocation.longitude
 		        })
 		        .then(function (response) {
 							console.log('Tweet posted with hashtag #nowplaying')

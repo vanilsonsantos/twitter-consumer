@@ -89,7 +89,7 @@ input {
 }
 
 .header {
-	margin:0;
+	margin:0 0 -5px 0;
 	padding:2px 0 2px 0;
 	min-width: 800px;
   background: #eae7e7;
