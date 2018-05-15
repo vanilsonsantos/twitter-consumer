@@ -23,7 +23,7 @@ io.on('connection', function (socket) {
 		twitter.get('search/tweets', {
 		            q: '#nowplaying url:youtube',
 		            result_type: 'recent',
-		            count: 18,
+		            count: 8,
 								geocode: currentLocation.latitude + ',' + currentLocation.longitude + ',30km'
 		        })
 		        .then(function (response) {
@@ -31,14 +31,7 @@ io.on('connection', function (socket) {
 							for (i=0 ; i < 5 ; i++) {
 								var tweet = response.statuses[i];
 								tweet.entities.urls.forEach(function(url) {
-									initialTweets.push({
-											avatar: tweet.user.profile_image_url,
-											name: tweet.user.name,
-											screen_name: tweet.user.screen_name,
-											text: tweet.text,
-											video_link: getVideoLink(url.expanded_url),
-											date: timeago.ago(tweet.created_at)
-									});
+									initialTweets.push(getFormatedTweet(tweet, url.expanded_url));
 								});
 							}
 							socket.emit('render-tweet-initial-view', initialTweets, viewport);
@@ -56,14 +49,7 @@ io.on('connection', function (socket) {
 					tweet.entities.urls.forEach(function(url) {
 						var expanded_url = url.expanded_url;
 						if (isYoutubeUrlValid(expanded_url)) {
-							socket.emit('render-tweet-from-stream', {
-								avatar: tweet.user.profile_image_url,
-								name: tweet.user.name,
-								screen_name: tweet.user.screen_name,
-								text: tweet.text,
-								video_link: getVideoLink(url.expanded_url),
-								date: timeago.ago(tweet.created_at)
-							});
+							socket.emit('render-tweet-from-stream', getFormatedTweet(tweet, url.expanded_url));
 						}
 					});
 				}
@@ -89,6 +75,18 @@ io.on('connection', function (socket) {
 		        });
 	});
 });
+
+function getFormatedTweet(tweet, videoUrl) {
+	return {
+		id: tweet.id,
+		avatar: tweet.user.profile_image_url.replace("http", "https"),
+		name: tweet.user.name,
+		screen_name: tweet.user.screen_name,
+		text: tweet.text,
+		video_link: getVideoLink(videoUrl),
+		date: timeago.ago(tweet.created_at)
+	};
+}
 
 function getCity(result) {
 	var city = '';

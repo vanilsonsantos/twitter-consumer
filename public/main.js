@@ -1,5 +1,5 @@
 var currentLocation;
-var socket = io.connect(`http://${window.location.host}`);
+var socket = io.connect(`/`);
 
 navigator.geolocation.getCurrentPosition(
     function(position) {

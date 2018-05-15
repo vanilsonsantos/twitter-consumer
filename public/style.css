@@ -173,13 +173,13 @@ input {
 .tweetContainerText {
 	width:100%;
 	margin-top: 15px;
-	font-size: 17px;
+	font-size: 15px;
 	float:right;
 }
 
 .tweetContainerInfo {
 	width:100%;
 	margin: 15px 0 15px 0;
-	font-size: 16px;
+	font-size: 14px;
 	float: right;
 }
