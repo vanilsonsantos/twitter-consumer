@@ -1,5 +1,5 @@
 var currentLocation;
-var socket = io.connect('https://nowplaying-twitter-streamer.herokuapp.com');
+var socket = io.connect(`http://${window.location.host}`);
 
 navigator.geolocation.getCurrentPosition(
     function(position) {
@@ -86,9 +86,7 @@ function getTweetContent(tweet) {
 }
 
 socket.on('render-tweet-initial-view', function (initialTweets, viewport) {
-  alert(initialTweets);
   initialTweets.forEach(function(tweet) {
-    alert(tweet);
     $('#content').append(getTweetContent(tweet));
   });
   $('.header').removeClass('disabledbutton');
