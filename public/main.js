@@ -58,43 +58,14 @@ function setHeader(city) {
   $('.top-container').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
 }
 
-function getTweetContent(tweet) {
-  return `<div class="tweetContent">
-    <div class="videoContainer">
-      <iframe style="border:0;" width="100%" height="100%" src="${tweet.video_link}"></iframe>
-    </div>
-    <div class="tweetContainer">
-      <div class="tweetContainerAvatar" style="background-image: url('${tweet.avatar}');">
-      </div>
-      <div class="tweetContainerName">
-        <span style="font-weight: bold; display:block;">${tweet.name}</span>
-        <span>@${tweet.screen_name}</span>
-      </div>
-      <div class="tweetContainerLogo">
-        <img src="./blue_tweet_logo.png" width="30px" height="30px">
-      </div>
-      <div class="tweetContainerText">
-        <span style="display:block; margin:0 15px 0 15px;">
-          ${tweet.text}
-        <span>
-      </div>
-      <div class="tweetContainerInfo">
-          <span style="text-align: justify; display:block; margin:0 15px 0 15px;">${tweet.date}</span>
-      </div>
-    </div>
-  </div>`
-}
-
 socket.on('render-tweet-initial-view', function (initialTweets, viewport) {
-  initialTweets.forEach(function(tweet) {
-    $('#content').append(getTweetContent(tweet));
-  });
+  $.tmpl( "tweetTemplate", initialTweets ).appendTo( "#content" );
   $('.header').removeClass('disabledbutton');
   socket.emit('start-stream', viewport);
 });
 
 socket.on('render-tweet-from-stream', function (tweet) {
-  $('#content').prepend(getTweetContent(tweet));
+  $.tmpl( "tweetTemplate", tweet ).prependTo( "#content" );
 });
 
 $("#submitTweet").click(function() {
