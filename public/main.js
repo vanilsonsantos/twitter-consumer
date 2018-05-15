@@ -38,24 +38,19 @@ function getCity(result) {
 	});
 	return city;
 }
+$(window).scroll(function(){
+  var sticky = $('#middleHeader'),
+      scroll = $(window).scrollTop();
 
-$(".header").addClass("disabledbutton");
-window.onscroll = function() {fixesHeader()};
-var header = document.getElementById("middleHeader");
-var sticky = header.offsetTop;
-
-function fixesHeader() {
-  if (window.pageYOffset >= sticky) {
-    header.classList.add("sticky");
-  } else {
-    header.classList.remove("sticky");
-  }
-}
+  if (scroll >= 100) sticky.addClass('sticky');
+  else sticky.removeClass('sticky');
+});
 
 function setHeader(city) {
-  $('.top-container').empty();
-  $('.top-container').append(`<h1>#nowplaying in ${city}</h1>`);
-  $('.top-container').append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
+  $('.top-container')
+    .empty()
+    .append(`<h1>#nowplaying in ${city}</h1>`)
+    .append(`<p>This page shows #nowplaying tweets in ${city} that constain a youtube link. It also allows you to post a #nowplaying tweet with a YouTube link</p>`);
 }
 
 socket.on('render-tweet-initial-view', function (initialTweets, viewport) {
