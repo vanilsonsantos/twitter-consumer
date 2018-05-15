@@ -1,4 +1,5 @@
 var currentLocation;
+var socket = io.connect('https://nowplaying-twitter-streamer.herokuapp.com');
 
 navigator.geolocation.getCurrentPosition(
     function(position) {
@@ -50,8 +51,6 @@ function fixesHeader() {
     header.classList.remove("sticky");
   }
 }
-
-var socket = io.connect('http://localhost:3000');
 
 function setHeader(city) {
   $('.top-container').empty();
