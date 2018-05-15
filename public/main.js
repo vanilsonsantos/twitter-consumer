@@ -87,7 +87,9 @@ function getTweetContent(tweet) {
 }
 
 socket.on('render-tweet-initial-view', function (initialTweets, viewport) {
+  alert(initialTweets);
   initialTweets.forEach(function(tweet) {
+    alert(tweet);
     $('#content').append(getTweetContent(tweet));
   });
   $('.header').removeClass('disabledbutton');
