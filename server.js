@@ -107,7 +107,7 @@ function getVideoLink(url) {
     var match = url.match(regExp);
 
     if (match && match[2].length == 11) {
-        return "http://www.youtube.com/embed/" + match[2];
+        return "https://www.youtube.com/embed/" + match[2];
     } else {
         return 'error';
     }
