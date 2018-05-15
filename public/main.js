@@ -71,7 +71,7 @@ function getTweetContent(tweet) {
         <span>@${tweet.screen_name}</span>
       </div>
       <div class="tweetContainerLogo">
-        <img src="./Twitter-Logo.png" width="30px" height="30px">
+        <img src="./blue_tweet_logo.png" width="30px" height="30px">
       </div>
       <div class="tweetContainerText">
         <span style="display:block; margin:0 15px 0 15px;">
@@ -100,5 +100,9 @@ socket.on('render-tweet-from-stream', function (tweet) {
 $("#submitTweet").click(function() {
   var youtube_link = $('#videourl').val();
   var text = $('#comment').val();
-  socket.emit('send-tweet', youtube_link, text, currentLocation);
+  if (youtube_link && text) {
+    socket.emit('send-tweet', youtube_link, text, currentLocation);
+  } else {
+    alert('Video link or comment should not be empty');
+  }
 });
